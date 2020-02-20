@@ -1,29 +1,3 @@
-// TASK: https://gist.github.com/tuomasj/8061c6940d74d3ab55bbea582e6c8f24
-
-var input1 = `  @---A---+
-          |
-  x-B-+   C
-      |   |
-      +---+`;
-
-var input2 = `      @
-      | C----+
-      A |    |
-      +---B--+
-        |      x
-        |      |
-        +---D--+`;
-
-var input3 = `  @---+
-      B
-K-----|--A
-|     |  |
-|  +--E  |
-|  |     |
-+--E--Ex C
-   |     |
-   +--F--+`;
-
 // NOTE: find start X and Y
 const findStartNode = maxY => {
   let currentNode = { x: -1, y: 0 };
@@ -32,7 +6,7 @@ const findStartNode = maxY => {
     currentNode.x = charMap[currentNode.y].indexOf("@");
 
     if (currentNode.x > -1) {
-      log(`@ is on: [x: ${currentNode.x}, y: ${currentNode.y}]`);
+      console.log(`@ is on: [x: ${currentNode.x}, y: ${currentNode.y}]`);
       break;
     }
   }
@@ -67,7 +41,6 @@ const shouldSkipVertical = (currentNode, nextNode) => {
     }
     return true;
   }
-  return false;
 };
 
 const shouldSkipHorizontal = (currentNode, nextNode) => {
@@ -79,27 +52,57 @@ const shouldSkipHorizontal = (currentNode, nextNode) => {
     }
     return true;
   }
-  return false;
 };
 
-const getNextNode = (charNodeMap, nextPos) => charNodeMap[nextPos.y][nextPos.x];
+const getNextNodeFromPosition = (charNodeMap, nextPosition) => charNodeMap[nextPosition.y][nextPosition.x];
 
-const advanceNode = nextNode => ({ ...nextNode, visited: true });
-
-const isCharCapitalLetter = char => /^[A-Z]$/.test(char);
+const advanceNode = nextNode => {
+  nextNode.visited = true;
+  return nextNode;
+};
 
 const collectNodeCharPath = (char, path, letters) => {
   path.push(char);
 
-  if (isCharCapitalLetter(char)) {
+  if (/^[A-Z]$/.test(char)) {
     letters.push(char);
   }
 };
 
-const log = console.log;
+// NOTE: start here
+const input1 = 
+`  @---A---+
+          |
+  x-B-+   C
+      |   |
+      +---+`;
+
+const input2 = 
+`      @
+      | C----+
+      A |    |
+      +---B--+
+        |      x
+        |      |
+        +---D--+`;
+
+const input3 = 
+`  @---+
+      B
+K-----|--A
+|     |  |
+|  +--E  |
+|  |     |
++--E--Ex C
+   |     |
+   +--F--+`;
+
+// NOTE: select input...
 const lines = input3.split("\n");
 const charMap = lines.map(l => l.split(""));
-const charNodeMap = charMap.map((line, y) => line.map((char, x) => ({ char, x, y })));
+const charNodeMap = charMap.map((line, y) =>
+  line.map((char, x) => ({ char, x, y }))
+);
 let nextNode;
 let direction = "left";
 const path = ["@"];
@@ -108,35 +111,32 @@ const letters = [];
 let currentNode = findStartNode(lines.length);
 
 do {
-  let nextPos = getNextPosition(direction, currentNode);
+  let nextPosition = getNextPosition(direction, currentNode);
 
-  try {
-    nextNode = getNextNode(charNodeMap, nextPos);
-  } catch {
-    /*  NOTE: when undefined */
-  }
+  try { nextNode = getNextNodeFromPosition(charNodeMap, nextPosition); }
+  catch { /*  NOTE: when undefined */ }
 
   if (!nextNode || nextNode.char == " " || nextNode.visited) {
     if (nextNode && nextNode.visited) {
-      // NOTE: skip over visited nodes in path
-      if (
+      if ( // NOTE: skip over visited nodes in path
         shouldSkipVertical(currentNode, nextNode) ||
         shouldSkipHorizontal(currentNode, nextNode)
       ) {
-        // NOTE: collect visited (again) and skipped node
+        // NOTE: must collect visited (again) and skipped node
         path.push(nextNode.char);
         continue;
       }
     }
-    direction = nextPos.nextDirection;
+    // NOTE: advance position clockwise
+    direction = nextPosition.nextDirection;
     continue;
   }
 
-  // NOTE: got valid unvisited node
-  currentNode = nextNode;
-  currentNode.visited = true;
+  // NOTE: got valid unvisited node, make it current
+  currentNode = advanceNode(nextNode);
+
   collectNodeCharPath(currentNode.char, path, letters);
 } while (currentNode.char != "x");
 
-log(letters.join(""));
-log(path.join(""));
+console.log(letters.join(""));
+console.log(path.join(""));
